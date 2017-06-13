@@ -71,4 +71,28 @@ crime <- merge(crime, SMR, by=c("Boroughs","Year"))
 rm(SMR)
 
 #### DATASHEET 2###
+datasheet2 <- read.csv("Data/datasheet2.csv",na.strings=c("NA","NaN",""," ","x","X","!","-"), sep=";")
+crime <- merge(crime, datasheet2, by=c("Boroughs","Year"))
 
+#### DATASHEET 3###
+datasheet3 <- read.csv("Data/datasheet3.csv",na.strings=c("NA","NaN",""," ","x","X","!","-"), sep=";")
+crime <- merge(crime, datasheet3, by=c("Boroughs","Year"))
+
+#### DATASHEET 4###
+datasheet4 <- read.csv("Data/datasheet4.csv",na.strings=c("NA","NaN",""," ","x","X","!","-"), sep=";")
+datasheet4 <- datasheet4[-c(100:114),]
+crime <- merge(crime, datasheet4, by=c("Boroughs","Year"))
+
+#### DATASHEET 5###
+datasheet5 <- read.csv("Data/datasheet5.csv",na.strings=c("NA","NaN",""," ","x","X","!","-"))
+crime <- merge(crime, datasheet5, by=c("Boroughs","Year"))
+
+### WEATHER ### -- not working yet
+weather <- read.csv("Data/weather_input_update.csv",na.strings=c("NA","NaN",""," ","x","X","!","-"), sep=";")
+weather <- weather[-c(37:72),]
+weather$year_month <- paste0(weather$Year,"_",weather$Month)
+weather$Year <- NULL
+weather$Month <- NULL
+crime$year_month <- paste0(crime$Year,"_",crime$Month)
+  
+crime <-  merge(crime, weather, by="year_month")
