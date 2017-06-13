@@ -11,7 +11,28 @@ crime <- crime[!crime$LSOA.code=="",]
 # sapply(crime, function(x){sum(is.na(x))})
 
 ## Gsub to get the names of the 348 local authorities
-crime$authority <- gsub(" [0-9]..*", "", crime$LSOA.name)
+crime$Boroughs <- gsub(" [0-9]..*", "", crime$LSOA.name)
+
+## Create year-column & month-column
+crime$Year <- substr(crime$Month, 1, 4)
+crime$Month <- substr(crime$Month, 6,7)
+
+## deal with Boroughs (there are more boroughs than necessary)
+london.boroughs <- c("City of London", "Barking and Dagenham", "Barnet", "Bexley", "Brent", "Bromley", "Camden", "Croydon", "Ealing","Enfield", "Greenwich", "Hackney","Hammersmith and Fulham","Haringey", "Harrow","Havering", "Hillingdon", "Hounslow", "Islington", "Kensington and Chelsea", "Kingston upon Thames", "Lambeth", "Lewisham", "Merton", "Newham", "Redbridge", "Richmond upon Thames", "Southwark", "Sutton", "Tower Hamlets", "Waltham Forest","Wandsworth", "Westminster")
+london.boroughs <- data.frame(london.boroughs)
+london.boroughs$london.boroughs <- as.character(london.boroughs$london.boroughs)
+
+crime <- crime[crime$Boroughs %in% london.boroughs$london.boroughs == TRUE,]
+
+
+##---- ARCHIVE ----- ####
+
+# --> deal with the boroughs
+# list.boroughs <- data.frame(unique(crime$Boroughs))
+# names(list.boroughs)[names(list.boroughs) == "unique.crime.Boroughs."] = "Unq.name"
+# list.boroughs$check <- ifelse(list.boroughs$Unq.name %in% london.boroughs$london.boroughs == TRUE,1,0)
+# length(crime$Boroughs[crime$Boroughs %in% list.boroughs$Unq.name])
+
 
 # # --> create a second frame with slightly different names
 # # for a possible easier matching
