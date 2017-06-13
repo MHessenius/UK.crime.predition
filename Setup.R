@@ -13,9 +13,23 @@ crime <- crime[!crime$LSOA.code=="",]
 ## Gsub to get the names of the 348 local authorities
 crime$Boroughs <- gsub(" [0-9]..*", "", crime$LSOA.name)
 
-## Create year-column & month-column
+## Create year-column & month-column & quarter-column
 crime$Year <- substr(crime$Month, 1, 4)
 crime$Month <- substr(crime$Month, 6,7)
+
+crime$Quarter <- crime$Month
+crime$Quarter[crime$Quarter=="01"] <- 1
+crime$Quarter[crime$Quarter=="02"] <- 1
+crime$Quarter[crime$Quarter=="03"] <- 1
+crime$Quarter[crime$Quarter=="04"] <- 2
+crime$Quarter[crime$Quarter=="05"] <- 2
+crime$Quarter[crime$Quarter=="06"] <- 2
+crime$Quarter[crime$Quarter=="07"] <- 3
+crime$Quarter[crime$Quarter=="08"] <- 3
+crime$Quarter[crime$Quarter=="09"] <- 3
+crime$Quarter[crime$Quarter=="10"] <- 4
+crime$Quarter[crime$Quarter=="11"] <- 4
+crime$Quarter[crime$Quarter=="12"] <- 4
 
 ## deal with Boroughs (there are more boroughs than necessary)
 london.boroughs <- c("City of London", "Barking and Dagenham", "Barnet", "Bexley", "Brent", "Bromley", "Camden", "Croydon", "Ealing","Enfield", "Greenwich", "Hackney","Hammersmith and Fulham","Haringey", "Harrow","Havering", "Hillingdon", "Hounslow", "Islington", "Kensington and Chelsea", "Kingston upon Thames", "Lambeth", "Lewisham", "Merton", "Newham", "Redbridge", "Richmond upon Thames", "Southwark", "Sutton", "Tower Hamlets", "Waltham Forest","Wandsworth", "Westminster")

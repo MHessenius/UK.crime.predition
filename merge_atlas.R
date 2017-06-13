@@ -87,12 +87,28 @@ crime <- merge(crime, datasheet4, by=c("Boroughs","Year"))
 datasheet5 <- read.csv("Data/datasheet5.csv",na.strings=c("NA","NaN",""," ","x","X","!","-"))
 crime <- merge(crime, datasheet5, by=c("Boroughs","Year"))
 
-### WEATHER ### -- not working yet
+### WEATHER ###
 weather <- read.csv("Data/weather_input_update.csv",na.strings=c("NA","NaN",""," ","x","X","!","-"), sep=";")
-weather <- weather[-c(37:72),]
-weather$year_month <- paste0(weather$Year,"_",weather$Month)
-weather$Year <- NULL
-weather$Month <- NULL
-crime$year_month <- paste0(crime$Year,"_",crime$Month)
-  
-crime <-  merge(crime, weather, by="year_month")
+weather <- weather[-c(37:72),] #delete NA columns
+weather$Month <- paste0("0",weather$Month) #prepare the merging
+weather$Month <- ifelse(weather$Month=="010","10",
+                        ifelse(weather$Month=="011","11",
+                               ifelse(weather$Month=="012","12",weather$Month)))
+
+crime <-  merge(crime, weather, by=c("Year","Month"))
+rm(weather)
+
+### Youth unemployment rate, quarterly ###
+
+youth.unemployment <- read.csv("Data/youth_unemployment_rates_london_uk_quarterly.csv", sep=";",header = TRUE, row.names = NULL)
+crime <-  merge(crime, youth.unemployment, by=c("Year","Quarter"))
+rm(youth.unemployment)
+
+### Unemployment rates, uk, london, monthly ###
+unemployment.monthly <- read.csv("Data/Unemployment_Rates_London_UK_monthly.csv", sep=";", header=TRUE)
+unemployment.monthly$Month <- paste0("0",unemployment.monthly$Month) #prepare the merging
+unemployment.monthly$Month <- ifelse(unemployment.monthly$Month=="010","10",
+                        ifelse(unemployment.monthly$Month=="011","11",
+                               ifelse(unemployment.monthly$Month=="012","12",unemployment.monthly$Month)))
+crime <-  merge(crime, unemployment.monthly, by=c("Year","Month"))
+rm(unemployment.monthly)
