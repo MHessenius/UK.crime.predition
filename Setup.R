@@ -38,6 +38,7 @@ london.boroughs$london.boroughs <- as.character(london.boroughs$london.boroughs)
 
 crime <- crime[crime$Boroughs %in% london.boroughs$london.boroughs == TRUE,]
 
+#saveRDS(crime, file="H:/Mapping/statistical-gis-boundaries-london/crime.rds")
 
 ##---- ARCHIVE ----- ####
 
