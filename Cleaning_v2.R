@@ -97,3 +97,7 @@ crime[,c("Year","Month","Quarter")] <- lapply(crime[,c("Year","Month","Quarter")
 #check outcome
 classes$class_v2 <- lapply(crime, function(x){class(x)})
 classes$class_v2 <-  as.character(classes$class_v2)
+
+
+###Save the final file
+# saveRDS(crime, file="crime.whole.cleaned.rds")
