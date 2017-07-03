@@ -33,9 +33,35 @@ list$class <- as.character(list$class)
 #convert all factors into integer
 list$factor <- ifelse(list$class=="factor",1,0) #dummy for the for-loop
 
+##convert "n/a" into NAs
+# sapply(crime, function(x){sum(x=="n/a", na.rm = TRUE)})
+# sum(crime[,"New.homes..net.additional.dwellings."]=="n/a",na.rm = TRUE) #72138
+# sum(crime[,"People.aged.17..with.diabetes..perc."]=="n/a",na.rm = TRUE) #6466
+# sum(is.na(crime[,"New.homes..net.additional.dwellings."])) #0
+# sum(is.na(crime[,"People.aged.17..with.diabetes..perc."])) #7493
+crime$New.homes..net.additional.dwellings.[crime$New.homes..net.additional.dwellings.=="n/a"] <- NA
+crime$People.aged.17..with.diabetes..perc.[crime$People.aged.17..with.diabetes..perc.=="n/a"] <- NA
+
+
+#backup before conversion
+backup <- crime[!duplicated(crime$Boroughs),]
+# backup2 <- data.frame(seq(1,33,1))
+# backup3 <- data.frame(seq(1,33,1))
+
+#loop: factor --> numeric
 for(i in list$cols.id[list$factor==1]){
-  crime[,i] <- as.integer(crime[,i])
+  crime[,i] <- as.numeric(gsub(",",".",crime[,i]))
 }
+# 
+# # compare w/ backup
+# for(i in list$cols.id[list$factor==1]){
+#   backup2[,1+which(i == list$cols.id[list$factor==1])] <- as.numeric(gsub(",",".",crime[!duplicated(crime$Boroughs),i]))
+# }
+# #to compare w/ backup2
+# 
+# for(i in list$cols.id[list$factor==1]){
+#   backup3[,1+which(i == list$cols.id[list$factor==1])] <- crime[!duplicated(crime$Boroughs),i]
+# }
 
 #check outcome of conversion
 list$class_v2 <-  lapply(crime[,c(cols.w.na)], function(x){class(x)})
@@ -85,10 +111,34 @@ classes$factor <- ifelse(classes$class=="factor",1,0)
 classes$convert <- classes$factor
 classes$convert[1:15] <- 0
 
-#convert all with onvert==1 into integer
+## -- SOME MANUAL CLEANING REQUIRED -- ##
+
+## Clean "X..of.Children.in.Poverty................" before
+crime$X..of.Children.in.Poverty................ <- gsub(",",".",substr(crime$X..of.Children.in.Poverty................, 1, 4))
+# unique(crime$X..of.Children.in.Poverty................) #two outliers
+crime$X..of.Children.in.Poverty................[crime$X..of.Children.in.Poverty................=="8.8."] <- "8.8"
+crime$X..of.Children.in.Poverty................[crime$X..of.Children.in.Poverty................=="8.3."] <- "8.3"
+crime$X..of.Children.in.Poverty................ <- as.numeric(crime$X..of.Children.in.Poverty................)
+classes[classes$Name=="X..of.Children.in.Poverty................","convert"] <- 0
+
+## Clean "New.homes..net.additional.dwellings."
+# sum(is.na(crime$New.homes..net.additional.dwellings.)) #72138
+# crime.backup <- crime
+# unique(crime$New.homes..net.additional.dwellings.)
+crime$New.homes..net.additional.dwellings.<-  as.numeric(as.character(crime$New.homes..net.additional.dwellings.))
+crime$New.homes..net.additional.dwellings.[is.na(crime$New.homes..net.additional.dwellings.)] <- median(unique(crime[,"New.homes..net.additional.dwellings."]), na.rm = TRUE)
+classes[classes$Name=="New.homes..net.additional.dwellings.","convert"] <- 0
+
+## -- // MANUAL CLEANING DONE -- ##
+
+#convert all with convert==1 into integer
+#gsub before
 
 for(i in classes$cols.id[classes$convert==1]){
-  crime[,i] <- as.integer(crime[,i])
+  crime[,i] <- as.numeric(gsub(",",".",crime[,i]))
+  #track the progress of the loop:
+  message(which(i == classes$cols.id[classes$convert==1]), '/',
+          length(classes$cols.id[classes$convert==1]))
 }
 
 #do remaining changes
@@ -100,4 +150,4 @@ classes$class_v2 <-  as.character(classes$class_v2)
 
 
 ###Save the final file
-# saveRDS(crime, file="crime.whole.cleaned.rds")
+saveRDS(crime, file="crime.whole.cleaned.rds")
