@@ -1,4 +1,8 @@
 ## Setup
+
+# since the files of the crime-dataset, are all per borough & per month, 
+# they need to be merged
+
 file_names <- dir("C:/Users/hessenim.hub/Downloads/01_Final/Greater London/")
 setwd("C:/Users/hessenim.hub/Downloads/01_Final/Greater London//") #exact working director necessary for the do.call command
 crime <- do.call(rbind,lapply(file_names,read.csv))
@@ -36,11 +40,13 @@ london.boroughs <- c("City of London", "Barking and Dagenham", "Barnet", "Bexley
 london.boroughs <- data.frame(london.boroughs)
 london.boroughs$london.boroughs <- as.character(london.boroughs$london.boroughs)
 
-crime <- crime[crime$Boroughs %in% london.boroughs$london.boroughs == TRUE,]
+crime <- crime[crime$Boroughs %in% london.boroughs$london.boroughs == TRUE,] #only take the relevant ones
 
 #saveRDS(crime, file="H:/Mapping/statistical-gis-boundaries-london/crime.rds")
 
+
 ##---- ARCHIVE ----- ####
+# --> code that is probably not necessary anymore
 
 # --> deal with the boroughs
 # list.boroughs <- data.frame(unique(crime$Boroughs))

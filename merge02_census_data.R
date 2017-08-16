@@ -1,4 +1,9 @@
 ### Merge census data
+# following files were merged
+# - age_strucutre
+# - ethnic_group
+# - hh_composition
+# - lone_parents_hh_dependent_children
 
 ### create a for loop to put all .csv-files into different dataframes
 

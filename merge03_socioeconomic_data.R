@@ -1,4 +1,7 @@
-##merge data
+#### 
+
+# PURPOSE: merge all data together from data.london.gov.uk 
+# and other sources (Weather & Unemployment...)
 
 ## merge data from Datasheet 1
 
