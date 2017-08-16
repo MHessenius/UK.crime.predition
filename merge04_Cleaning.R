@@ -2,7 +2,7 @@
 crime <- readRDS("H:/RDS_files/crime.whole.rds")
 if(!require("dplyr")) install.packages("dplyr"); library("dplyr")
 
-## Overview about missing values
+## Get Overview about missing values
 
 #get the column names
 cols.w.na <- colnames(crime)[colSums(is.na(crime)) > 0]
