@@ -1,3 +1,7 @@
+### PURPOSE ###
+# Get a traindataset ready to run some first models
+# -> check whether the classes are correct
+
 ### Get the traindata ready ###
 
 crime.cleaned <- readRDS("H:/RDS_files/crime.whole.cleaned.rds")
@@ -13,6 +17,12 @@ train$Boroughs <- as.factor(train$Boroughs)
 train$Crime.ID <- as.factor(train$Crime.ID)
 
 # saveRDS(train, file="H:/RDS_files/traindata.malte.rds")
+
+
+
+# -------------------------------------------------------------------- #
+
+#### ARCHIVE ####
 
 ## For better overview
 # classes.train <- data.frame(colnames(train))
