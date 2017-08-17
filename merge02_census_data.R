@@ -28,6 +28,7 @@ for(i in 1:length(temp2)){
 }
 
 ### delete all columns that aren't necessary "date"/"geography"/"Rural.Urban"
+# -> i.e. reduce every df by 3 columns
 
 for(i in 1:length(temp2)){
   df <- data.frame(get(temp2[i]))
