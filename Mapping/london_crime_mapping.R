@@ -24,44 +24,37 @@ setwd("H:/Mapping/statistical-gis-boundaries-london/ESRI_London_Borough/")
 london <- readOGR(dsn = ".", layer = "London_Borough_Excluding_MHW") #exact 33 entries = greater london :)
 london <- fortify(london, region="GSS_CODE") #fortify makes it readable for ggplot
 
-## SIDESTEP: add the borough-codes to the crime-dataset
-# crime <- readRDS("H:/Mapping/statistical-gis-boundaries-london/crime.rds") #w/o features
+# add the borough codes to the crime-dataset
+# crime.gld <- readRDS("H:/RDS_files/crime.whole.cleaned.2011.rds")
 # london.profiles <- read.csv("H:/Mapping/statistical-gis-boundaries-london/london-borough-profiles.csv")
 # london.profiles <- london.profiles[1:33,]
+# 
 # names(london.profiles)[names(london.profiles) == "Code"] = "id"
 # london.profiles <- london.profiles[!duplicated(london.profiles$Area_name),]
 # london.profiles <- london.profiles[,c("id","Area_name")]
 # london.profiles$Area_name <- as.character(london.profiles$Area_name)
-# names(crime)[names(crime) == "Boroughs"] = "Area_name"
-# sum(crime$Area_name %in% london.profiles$Area_name==TRUE) #all names correct --> ready to merge
-# crime <- left_join(crime, london.profiles, by="Area_name")
-# #for better descriptions in a plot, it's recommended to shorten long area_names
-# crime$Area_name_red <- crime$Area_name 
-# crime$Area_name_red <- as.character(crime$Area_name_red)
-# crime$Area_name_red[crime$Area_name_red=="Barking and Dagenham"] <- as.character("Bark. and D.")
-# crime$Area_name_red[crime$Area_name_red=="Kingston upon Thames"] <- as.character("Kingst. u.T.")
-# crime$Area_name_red[crime$Area_name_red=="Hammersmith and Fulham"] <- as.character("Hamm. and F.")
-# crime$Area_name_red[crime$Area_name_red=="Richmond upon Thames"] <- as.character("Richm. u.T.")
-# crime$Area_name_red[crime$Area_name_red=="Kensington and Chelsea"] <- as.character("K. and Chelsea")
-# saveRDS(crime, "H:/RDS_files/crime.w_o_features.rds")
-# --> now it contains the code of each borough
+# names(crime.gld)[names(crime.gld) == "Boroughs"] = "Area_name"
+# sum(crime.gld$Area_name %in% london.profiles$Area_name==TRUE) #all names correct --> ready to merge
+# crime.gld <- left_join(crime.gld, london.profiles, by="Area_name")
+# names(crime.gld)[names(crime.gld) == "id"] = "Area_id"
+# saveRDS(crime.gld, "H:/RDS_files/crime.whole.cleaned.2011.rds")
 
 # 2nd step: get crime-data
 # only take the 2011-occurences and only Robberies
 
-crime <- readRDS("H:/RDS_files/crime.w_o_features.rds")
-crime <- crime[crime$Year=="2011",]
-# crime <- crime[crime$Month=="01",] #only January to reduce the dataset
+crime.gld <- readRDS("H:/RDS_files/crime.whole.cleaned.2011.rds")
+crime.gld <- crime.gld[,1:16]
 
 # just create artificial data
-test <- crime
-test <- test[!duplicated(test$id),]
-test <- data.frame(test$id)
+test <- crime.gld
+test <- test[!duplicated(test$Area_id),]
+test <- data.frame(test$Area_id)
 test$artificial <- sample(1:100, size=nrow(test), replace=TRUE)/100
-names(test)[names(test) == "test.id"] = "id"
+names(test)[names(test) == "test.Area_id"] = "Area_id"
+names(london)[names(london) == "id"] = "Area_id"
 
 #merge test with the map-data
-plotData <- left_join(london, test, by="id") #done
+plotData <- left_join(london, test, by="Area_id") #done
 
 p <- ggplot() +
   geom_polygon(data = plotData, aes(x = long, y = lat, group = group,
@@ -206,3 +199,15 @@ rm(borough.names)
 #   aes(x=Longitude, y=Latitude), 
 #   data=london.crime, alpha=.2, na.rm = T) 
 
+###########
+
+# #for better descriptions in a plot, it's recommended to shorten long area_names
+# crime$Area_name_red <- crime$Area_name 
+# crime$Area_name_red <- as.character(crime$Area_name_red)
+# crime$Area_name_red[crime$Area_name_red=="Barking and Dagenham"] <- as.character("Bark. and D.")
+# crime$Area_name_red[crime$Area_name_red=="Kingston upon Thames"] <- as.character("Kingst. u.T.")
+# crime$Area_name_red[crime$Area_name_red=="Hammersmith and Fulham"] <- as.character("Hamm. and F.")
+# crime$Area_name_red[crime$Area_name_red=="Richmond upon Thames"] <- as.character("Richm. u.T.")
+# crime$Area_name_red[crime$Area_name_red=="Kensington and Chelsea"] <- as.character("K. and Chelsea")
+# saveRDS(crime, "H:/RDS_files/crime.w_o_features.rds")
+# --> now it contains the code of each borough
