@@ -11,7 +11,7 @@
 # the right values for longitude in the column "name".
 
 # get all packages
-      source("load_packages.R") 
+      source("./Mapping/load_packages.R") 
       spatial.packages()
 # --------
 # EXCEL-CLEANED FILE
@@ -95,8 +95,12 @@ names(poi)[names(poi) == "LSOA11CD"] = "lsoa_code"
 # length(unique(poi$lsoa_code)) #4808
 # sum(is.na(poi$lsoa_code)) #0
 
-# save RDS:
+## save RDS:
 
+#remove noisy data:
+    poi[,c("address","id","location","originalId","polarity","reviews","optional","optional.1",
+        "X","X.1", "details")] <- NULL
+    poi <- poi[,c(1,2,3,7,8,4,5,6)] #rearrange columns
 # saveRDS(poi, "H:/RDS_files/london-poi-cleaned-w-code.rds")
 
 
