@@ -10,9 +10,12 @@
 # Basically I found the right values for lat in the column location" and
 # the right values for longitude in the column "name".
 
+# get all packages
+      source("load_packages.R") 
+      spatial.packages()
 # --------
 # EXCEL-CLEANED FILE
-source("load_packages.R") #get all packages
+
 poi.cleaned <- read.csv("H:/RDS_files/london-poi-cleaned.csv", sep=",")
 
 # convertion: from factor to numeric
@@ -51,12 +54,12 @@ over(poi.cleaned, g.ld4[,"CODE"] ) #works
 poi.cleaned$area_code <- over(poi.cleaned, g.ld4[,"CODE"] )
 
 # Verify the result
-unique(poi.cleaned@data$area_code)
-  poi.cleaned2 = data.frame(poi.cleaned) #change it to a normal data.frame
-  poi.subset <- subset(poi.cleaned2,CODE=="E09000002" | CODE=="E09000004" | CODE=="E09000027" ) #why did he rename the colum?
-plot(g.ld4)
-points(poi.subset$lng, poi.subset$lat, pch=20) # seems to work :)
-rm(poi.cleaned2)
+            unique(poi.cleaned@data$area_code)
+              poi.cleaned2 = data.frame(poi.cleaned) #change it to a normal data.frame
+              poi.subset <- subset(poi.cleaned2,CODE=="E09000002" | CODE=="E09000004" | CODE=="E09000027" ) #why did he rename the colum?
+            plot(g.ld4)
+            points(poi.subset$lng, poi.subset$lat, pch=20) # seems to work :)
+            rm(poi.cleaned2)
 
 #save it as RDS
 poi.cleaned <- data.frame(poi.cleaned)
@@ -74,6 +77,7 @@ poi <- readRDS("H:/RDS_files/london-poi-cleaned-w-code.rds")
 
 #run the script "lsoa_mapping" --> lsoa as outcome
   # to do: write the "lsoa_mapping" as a fct. and source it
+  # source("./Mapping/lsoa.mapping.R") - doesn't work so far
 
 lsoa.backup <- lsoa
 
