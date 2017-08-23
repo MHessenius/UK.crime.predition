@@ -12,7 +12,7 @@
 
 # --------
 # EXCEL-CLEANED FILE
-
+source("load_packages.R") #get all packages
 poi.cleaned <- read.csv("H:/RDS_files/london-poi-cleaned.csv", sep=",")
 
 # convertion: from factor to numeric
@@ -68,9 +68,59 @@ names(poi.cleaned)[names(poi.cleaned) == "CODE"] = "area_code"
 # saveRDS(poi.cleaned, "H:/RDS_files/london-poi-cleaned-w-code.rds")
     
 # NEXT STEP
-  # -> creation of features!
+    # What about LSOA districts?
+    
+poi <- readRDS("H:/RDS_files/london-poi-cleaned-w-code.rds")
+
+#run the script "lsoa_mapping" --> lsoa as outcome
+  # to do: write the "lsoa_mapping" as a fct. and source it
+
+lsoa.backup <- lsoa
+
+# prework about the CRS-codes
+coordinates(poi) <- c("lng","lat")
+lsoa_wgs84 <- spTransform(lsoa, CRS("+proj=longlat +datum=WGS84"))
+proj4string(poi) <- proj4string(lsoa_wgs84)
+
+# create new column in poi-dataset
+poi$lsoa_code <- over(poi, lsoa_wgs84[,"LSOA11CD"])
+poi <- data.frame(poi) #back to dataframe
+names(poi)[names(poi) == "LSOA11CD"] = "lsoa_code"
+
+# Verification
+# length(unique(poi$lsoa_code)) #4808
+# sum(is.na(poi$lsoa_code)) #0
+
+# save RDS:
+
+# saveRDS(poi, "H:/RDS_files/london-poi-cleaned-w-code.rds")
 
 
+#----------------------------------------------------
+# Successful attempt
+# https://stackoverflow.com/questions/20054957/n-a-values-using-over-function-with-sp-package-in-r
+  
+#   crime<-read.csv("crime sample.csv")
+#   crime<-subset(crime,!is.na(crime$Latitude))
+#   coordinates(crime)<-c("Longitude","Latitude")
+#   Neigh <- readOGR(".", "Neighborhoods_2012b")
+#   
+#   proj4string(crime)<-proj4string(Neigh)
+#   inside.Neigh <- !is.na(over(crime, as(Neigh, "SpatialPolygons")))
+#   
+#   Neigh_wgs84 <- spTransform(Neigh, CRS("+proj=longlat +datum=WGS84"))
+#   proj4string(crime) <- proj4string(Neigh_wgs84)
+#   plot(Neigh_wgs84)
+#   plot(crime, add=TRUE, col="red")
+#   
+#   #adapt it:
+#   coordinates(poi) <- c("lng","lat")
+#   lsoa_wgs84 <- spTransform(lsoa, CRS("+proj=longlat +datum=WGS84"))
+#   proj4string(poi) <- proj4string(lsoa_wgs84)
+#   plot(lsoa_wgs84)
+#   plot(poi, add=TRUE, col="red")
+#   over(poi, lsoa_wgs84[,"LSOA11CD"])
+  
 ##-- ARCHIVE: Investigation of the original poi-file
 
 # read the data

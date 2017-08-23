@@ -17,9 +17,10 @@ for (shp in shps) assign(shp, readOGR('.',layer=shp))
 lsoa <- LSOA_2011_BFE_Barking_and_Dagenham
 
 #merge them all together
+
 for(i in 2:length(shps)){
   temp <- get(shps[i])
-  lsoa <- rbind(df, temp)
+  lsoa <- rbind(lsoa, temp)
   rm(temp)
   print(paste(i,"/",length(shps)))
 }
