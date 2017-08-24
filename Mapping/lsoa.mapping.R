@@ -30,7 +30,8 @@ for(i in 2:length(shps)){
 
 #remove all .shp-files from r-console
 rm(list = c(shps))
-
+rm(shp)
+rm(shps)
 #return(assign(lsoa))
 }
 # ------------------------------------
