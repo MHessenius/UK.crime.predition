@@ -2,6 +2,8 @@
 
 spatial.packages <- function(){
   # get all packages
+  if(!require("caret")) install.packages("caret"); library("caret")
+  if(!require("e1071")) install.packages("e1071"); library("e1071")
   if(!require("dplyr")) install.packages("dplyr"); library("dplyr")
   if(!require("ggmap")) install.packages("ggmap"); library("ggmap")
   if(!require("RCurl")) install.packages("RCurl"); library("RCurl")
