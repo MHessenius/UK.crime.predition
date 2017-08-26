@@ -1,15 +1,16 @@
 #---------------------------
 ## First steps to start the modeling
 
-# Overview
+# Overview (up-to-date)
 # 1) Prework and Splitting
-# 2) 1st attempt: Naive Bayes -- so far poor accuracy
+# 2) 1st attempt: Naive Bayes -- so far poor accuracy, but works
+# 3) Some first sketches (SVM, Decision Tree)
 
 #---------------------------
 # NEED FOR CHANGE
 ownwd <- "H:/GitHub/UK.crime.predition/" #set your own directory
 
-test.pct <- 0.05 # only use X per-cent of the train-data to get first & fast preliminary results
+test.pct <- 0.002 # only use X per-cent of the train-data to get first & fast preliminary results
                  # set it to 1 if whole train-data should be used
 
 # // NEED FOR CHANGE
@@ -67,7 +68,22 @@ test.pct <- 0.05 # only use X per-cent of the train-data to get first & fast pre
 
 #---------------------------    
     
-### 3) DECISION TREE -- copy & paste from exercise 5 BADS
+### 3) Some first attempts
+    
+    ##--- SVM ---##
+    
+    svm_model <- svm(Crime.type ~ ., data=train)
+    summary(svm_model)
+    x <- train[,-13]
+    y <- train[,13]
+    
+    pred.svm <- predict(svm_model,x)
+    system.time(pred <- predict(svm_model,x))
+    
+    ## --> TAKES AGES!, even fore a ridiculously small dataset
+    
+    
+    ##--- DECISION TREE ---## (copy&paste BADS)
     
     if(!require("rpart")) install.packages("rpart"); library("rpart")
     
