@@ -11,8 +11,6 @@ get.crime.data <- function(){
       
       
       return(crime)
-      return(train)
-      return(test)
 }
 
 get.train.data <- function(){
