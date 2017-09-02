@@ -6,6 +6,8 @@ if(!require("plotly")) install.packages("plotly"); library("plotly")
 train <- data.table(crime)
 ## crime type and location/borough
 train[, .N, by = Location][order(N, decreasing = T)][1:10]
+train[, .N, by = Crime.type][order(N, decreasing = T)][1:10]
+train[, .N, by = LSOA.name][order(N, decreasing = T)][1:10]
 d=train[, .N, by = Crime.type][order(N, decreasing = T)]
 ggplot(d, aes(x = reorder(Crime.type, -N), y = N, fill = N)) + 
   geom_bar(stat = 'identity') + 
