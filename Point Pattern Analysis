@@ -1,0 +1,117 @@
+## Point Pattern Analysis
+
+if(!require("spatstat")) install.packages("spatstat"); library("spatstat")
+if(!require("sp")) install.packages("sp"); library("sp")
+if(!require("raster")) install.packages("raster"); library("raster")
+if(!require("maptools")) install.packages("maptools"); library("maptools")
+if(!require("plotrix")) install.packages("plotrix"); library("plotrix")
+train$Longitude <- as.numeric(as.character(train$Longitude))
+train$Latitude <- as.numeric(as.character(train$Latitude))
+coordinates(train)=~Longitude+Latitude
+zero <- zerodist(train)
+length(unique(zero[,1]))
+
+download.file("http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_1_states_provinces.zip",destfile="ne_10m_admin_1_states_provinces.zip")
+unzip("ne_10m_admin_1_states_provinces.zip",exdir="NaturalEarth")
+border <- shapefile("NaturalEarth/ne_10m_admin_1_states_provinces.shp")
+
+GreaterLondon <- border[paste(border$region)=="Greater London",]
+
+projection(train)=projection(border)
+overlay <- over(train,GreaterLondon)
+
+train$over <- overlay$OBJECTID_1
+
+data.London <- train[!is.na(train$over),]
+
+jpeg("PP_plot.jpg",2500,2000,res=300)
+plot(data.London,pch="+",cex=0.5,main="",col=data.London$Crime.type)
+plot(GreaterLondon,add=T)
+legend(x=-0.53,y=51.41,pch="+",col=unique(data.London$Crime.type),legend=unique(data.London$Crime.type),cex=0.4)
+dev.off()
+
+####Descriptive Stats
+
+#The focus of a point pattern analysis is firstly to examine the spatial distribution of the events, and secondly making inferences about the process that generated the point pattern. Thus the first step in every point pattern analysis, as in every statistical and geostatistical analysis, is describe the dataset in hands with some descriptive indexes. In statistics we normally use mean and standard deviation to achieve this, however here we are working in 2D space, so things are slightly more complicated.
+#For example instead of computing the mean we compute the mean centre, which is basically the point identified by the mean value of longitude and the mean value of latitude:( formula here)
+#Using the same principle we can compute the standard deviation of longitude and latitude, and the standard distance, which measures the standard deviation of the distance of each point from the mean centre. 
+#This is important because it gives a measure of spread in the 2D space, and can be computed with the following equation from Wu (2006):(formula here)
+  
+mean_centerX <- mean(data.London@coords[,1])
+mean_centerY <- mean(data.London@coords[,2])
+
+standard_deviationX <- sd(data.London@coords[,1])
+standard_deviationY <- sd(data.London@coords[,2])
+
+standard_distance <- sqrt(sum(((data.London@coords[,1]-mean_centerX)^2+(data.London@coords[,2]-mean_centerY)^2))/(nrow(data.London)))
+#We can use the standard distance to have a visual feeling of the spread of our data around their mean centre. We can use the function draw.circle in the package plotrix to do that
+jpeg("PP_Circle.jpeg",2500,2000,res=300)
+plot(data.London,pch="+",cex=0.5,main="")
+plot(GreaterLondon,add=T)
+points(mean_centerX,mean_centerY,col="red",pch=16)
+draw.circle(mean_centerX,mean_centerY,radius=standard_distance,border="red",lwd=2)
+dev.off()
+
+#The problem with the standard distance is that it averages the standard deviation of the distances for both coordinates, so it does not take into account possible differences between the two dimensions. We can take those into account by plotting an ellipse, instead of a circle
+jpeg("PP_Ellipse.jpeg",2500,2000,res=300)
+plot(data.London,pch="+",cex=0.5,main="")
+plot(GreaterLondon,add=T)
+points(mean_centerX,mean_centerY,col="red",pch=16)
+draw.ellipse(mean_centerX,mean_centerY,a=standard_deviationX,b=standard_deviationY,border="red",lwd=2)
+dev.off()
+
+## Analysis on crime type Level
+## Type 1: Drugs##
+Drugs <- data.London[data.London$Crime.type==unique(data.London$Crime.type)[3],]
+Drugs <- remove.duplicates(Drugs)
+## Remark : spatstat doesnt work with duplicates that's why we removed them.
+#A point pattern is defined as a series of events in a given area, or window, of observation. It is therefore extremely important to precisely define this window. 
+
+window <- as.owin(GreaterLondon)
+
+#Now we can use the function ppp, in spatstat, to create the point pattern object:
+
+Drugs.ppp <- ppp(x=Drugs@coords[,1],y=Drugs@coords[,2],window=window)
+
+##Intensity and Density
+GreaterLondonUTM <- spTransform(GreaterLondon,CRS("+init=epsg:32630"))
+Drugs.ppp$n/sum(sapply(slot(GreaterLondonUTM, "polygons"), slot, "area"))
+jpeg("PP_QuadratCounting.jpeg",2500,2000,res=300)
+plot(Drugs.ppp,pch="+",cex=0.5,main="Drugs")
+plot(quadratcount(Drugs.ppp, nx = 4, ny = 4),add=T,col="blue")
+dev.off()
+
+Local.Intensity <- data.frame(Borough=factor(),Number=numeric())
+for(i in unique(GreaterLondonUTM$name)){
+  sub.pol <- GreaterLondonUTM[GreaterLondonUTM$name==i,]
+  
+  sub.ppp <- ppp(x=Drugs.ppp$x,y=Drugs.ppp$y,window=as.owin(sub.pol))
+  Local.Intensity <- rbind(Local.Intensity,data.frame(Borough=factor(i,levels=GreaterLondonUTM$name),Number=sub.ppp$n))
+}
+#result plot
+colorScale <- color.scale(Local.Intensity[order(Local.Intensity[,2]),2],color.spec="rgb",extremes=c("green","red"),alpha=0.8)
+
+jpeg("PP_BoroughCounting.jpeg",2000,2000,res=300)
+par(mar=c(5,13,4,2)) 
+barplot(Local.Intensity[order(Local.Intensity[,2]),2],names.arg=Local.Intensity[order(Local.Intensity[,2]),1],horiz=T,las=2,space=1,col=colorScale)
+dev.off()
+
+#Another way in which we can determine the spatial distribution of the intensity is by using kernel smoothing (Diggle, 1985; Berman and Diggle, 1989; Bivand et. al., 2008)
+jpeg("Kernel_Density.jpeg",2500,2000,res=300)
+par(mfrow=c(2,2))
+plot(density.ppp(Drugs.ppp, sigma = bw.diggle(Drugs.ppp),edge=T),main=paste("h =",round(bw.diggle(Drugs.ppp),2)))
+plot(density.ppp(Drugs.ppp, sigma = bw.ppl(Drugs.ppp),edge=T),main=paste("h =",round(bw.ppl(Drugs.ppp),2)))
+plot(density.ppp(Drugs.ppp, sigma = bw.scott(Drugs.ppp)[2],edge=T),main=paste("h =",round(bw.scott(Drugs.ppp)[2],2)))
+plot(density.ppp(Drugs.ppp, sigma = bw.scott(Drugs.ppp)[1],edge=T),main=paste("h =",round(bw.scott(Drugs.ppp)[1],2)))
+dev.off()
+
+# complete spatial randomness
+## Assessing if a point pattern is random is a crucial step of the analysis. If we determine that the pattern is random it means that each point is independent from each other and from any other factor. 
+##Complete spatial randomness implies that events from the point process are equally as likely to occur in every regions of the study window. In other words, the location of one point does not affect the probability of another being observed nearby, each point is therefore completely independent from the others (Bivand et al., 2008). 
+
+jpeg("GFunction.jpeg",2500,2000,res=300)
+plot(Gest(Drugs.ppp),main="Drug Related Crimes")
+dev.off()
+
+## Type 2: Robbery##
+
