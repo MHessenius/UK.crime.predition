@@ -44,17 +44,50 @@ test <- get.test.data()
     #Chi-Squared #Information gain
     start.time <- Sys.time()
     v.importance.chi <- generateFilterValuesData(trainTask, method = "chi.squared")
-    v.importance.infogain <- generateFilterValuesData(trainTask, method = "information.gain")
+    #v.importance.infogain <- generateFilterValuesData(trainTask, method = "information.gain")
     end.time <- Sys.time()
     time.taken <- end.time - start.time
     time.taken
     
     
     #plot it
-    plotFilterValues(v.importance.chi,n.show = 41)
+    plotFilterValues(v.importance.chi,n.show = 80)
     plotFilterValues(v.importance.infogain,n.show = 41)
     
     # cool package to play around with:
     if(!require("ggvis")) install.packages("ggvis"); library("ggvis")
     plotFilterValuesGGVIS(v.importance)
 
+### 2) RANDOM FOREST ###
+    
+    if(!require("caret")) install.packages("caret"); library("caret")
+    if(!require("randomForest")) install.packages("randomForest"); library("randomForest")
+    
+    source("./Mapping/get.dataset.R")
+    test.pct <- 1
+    crime <- get.crime.data()
+    train <- get.train.data()
+    test <- get.test.data()
+    
+    # deal with the >53 categories problem
+    count <- data.frame( name= c(colnames(train)))
+    count$categories <- lapply(train, function(x)length(unique(x)))
+    
+    #  cat(as.character(count[count$categories>=52,"name"]), sep=",")
+    drops <- c("LSOA.code","Crime.ID","Longitude","Latitude","Location","LSOA.name","Family.Type..All.lone.parent.housholds.with.dependent.children..measures..Value","Family.Type..Lone.parent.in.part.time.employment..Total..measures..Value","Family.Type..Lone.parent.in.full.time.employment..Total..measures..Value","Family.Type..Lone.parent.not.in.employment..Total..measures..Value","Family.Type..Female.lone.parent..Total..measures..Value","Family.Type..Female.lone.parent..In.part.time.employment..measures..Value","Family.Type..Female.lone.parent..Not.in.employment..measures..Value","POI.Count_lsoa_poi","LSOA.tract.population","LSOA.tract.hectares","LSOA.tract.density.persons.p.hect","LSOA.crimes.p.tract.p.month","LSOA.crimes.p.tract.p.year","LSOA.crimes.p.year.p.hectar","Area.crimes.p.month","Area.crimes.p.month.p.square.km")
+    train.red <- train[,!(names(train) %in% drops)]
+    
+    
+    sum(apply(train.red,2,function(x)length(unique(x)))>52) #0
+    
+    start.time <- Sys.time()
+    fit=randomForest(factor(Crime.type)~., data=train.red)
+    end.time <- Sys.time()
+    time.taken <- end.time - start.time
+    time.taken
+    
+    varImp(fit)
+    
+### 3) WEIGHT OF EVIDENCE ###
+    
+    
