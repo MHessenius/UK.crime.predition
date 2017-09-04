@@ -7,7 +7,8 @@
 #---------------------------
 # NEED FOR CHANGE
 ownwd <- "H:/GitHub/UK.crime.predition/" #set your own directory
-test.pct <- 0.1 #percentage of the train-set to get faster results while coding, set to 1 for final tuning
+setwd(ownwd)
+test.pct <- 0.3 #percentage of the train-set to get faster results while coding, set to 1 for final tuning
 
 # // NEED FOR CHANGE
 #---------------------------
@@ -88,6 +89,43 @@ test <- get.test.data()
     
     varImp(fit)
     
-### 3) WEIGHT OF EVIDENCE ###
+### 3) XGB ###
+    #variable selection based on xgb
+    if(!require("xgboost")) install.packages("xgboost"); library("xgboost") # load the package
     
+    #tuning values takem from BADS
+    xgb_best_nrounds <-  80 #xgb$bestTune$nrounds
+    xgb_best_max_depth <- 5 # xgb$bestTune$max_depth 
+    xgb_best_eta <- 0.2 #  xgb$bestTune$eta
+    xgb_best_gamma <- 0 # xgb$bestTune$gamma
+    xgb_best_colsample_bytree <-  0.8 #xgb$bestTune$colsample_bytree
+    xgb_best_min_child_weight <-  1 #xgb$bestTune$min_child_weight
+    xgb_best_subsample <- 0.8 # xgb$bestTune$subsample
+    
+    # try to handle vector size
+    train.red <- train[1:5000,]
+    train.red$ASB <- ifelse(train.red$Crime.type=="Anti-social behaviour",1,0)
+    sum(train.red$ASB) #1750
+    
+    # Train xgb model and use already known parameters
+    xgb <- caret::train(ASB~. -Crime.ID, data = train.red,
+                        method = 'xgbTree', trControl = trainControl(method = 'none'), importance = TRUE,
+                        tuneGrid = expand.grid(nrounds = xgb_best_nrounds, max_depth = xgb_best_max_depth, eta = xgb_best_eta, gamma = xgb_best_gamma, colsample_bytree = xgb_best_colsample_bytree,
+                                               min_child_weight = xgb_best_min_child_weight, subsample = xgb_best_subsample))
+    
+    # the xgboost package includes the function xgb.importance()
+    importance_by_xgb <- xgb.importance(model = xgb$finalModel, feature_names = xgb$finalModel$xNames)
+    #choose important variables based on xgb
+    # we base the decision on Gain in Gini purity
+    plot_importance_by_xgb <- plot(importance_by_xgb$Gain ) 
+    top_by_xgb<- importance_by_xgb$Feature[1:25]
+    top_by_xgb
+    
+    varImp_list <- list("top_by_rf" = top_by_rf, "plot_importance_by_rf" = plot_importance_by_rf, "top_by_xgb" = top_by_xgb, "plot_importance_by_xgb" = plot_importance_by_xgb)
+    
+    return(varImp_list)
+    
+### 4) FilterVarImp -- caret ###
+    
+    filterVarImp(train.red, train)
     

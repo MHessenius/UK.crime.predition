@@ -18,7 +18,11 @@ test.pct <- 0.002 # only use X per-cent of the train-data to get first & fast pr
 
 ### 1) PREWORK AND SPLITTING ###
     setwd(ownwd)
-    crime <- readRDS("./Data/crime.whole.cleaned.2011.rds")
+    crime <- readRDS("DROPBOX-PATH")
+    
+    source("./Mapping/get.dataset.R")
+    train <- get.train.data()
+    test <- get.test.data()
 
     #cleaning & conversion
     crime[,c("Last.outcome.category","Context","Year")] <- NULL
@@ -59,10 +63,11 @@ test.pct <- 0.002 # only use X per-cent of the train-data to get first & fast pr
     if(!require("caret")) install.packages("caret"); library("caret")
     if(!require("e1071")) install.packages("e1071"); library("e1071")
     
-    nb <- naiveBayes(Crime.type~., data = train) #train nb model on all variables
+    nb <- naiveBayes(Crime.type~., data = train.red) #train nb model on all variables
     
-    x_test <- test[,-13]
-    y_test <- test[,13]
+    
+    x_test <- test[,-13] #all except crime.type
+    y_test <- test[,13] #all except crime.type
     pred.nb <- predict(nb, x_test)
     confusionMatrix(pred.nb, y_test) # accuracy of 13 per cent :D
 
@@ -72,7 +77,7 @@ test.pct <- 0.002 # only use X per-cent of the train-data to get first & fast pr
     
     ##--- SVM ---##
     
-    svm_model <- svm(Crime.type ~ ., data=train)
+    svm_model <- svm(Crime.type ~ ., data=train.red)
     summary(svm_model)
     x <- train[,-13]
     y <- train[,13]
@@ -83,9 +88,22 @@ test.pct <- 0.002 # only use X per-cent of the train-data to get first & fast pr
     ## --> TAKES AGES!, even fore a ridiculously small dataset
     
     
-    ##--- DECISION TREE ---## (copy&paste BADS)
+    ##--- DECISION TREE ---## from: http://dataaspirant.com/2017/02/03/decision-tree-classifier-implementation-in-r/
     
     if(!require("rpart")) install.packages("rpart"); library("rpart")
+    if(!require("rpart.plot")) install.packages("rpart.plot"); library("rpart.plot")
+    if(!require("caret")) install.packages("caret"); library("caret")
+    
+    ## 1st attempt
+    train.red <- train[1:5000,]
+    
+    ##
+    trctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
+    set.seed(123)
+    dtree_fit <- caret::train(Crime.type ~., data = train.red, method = "rpart",
+                       parms = list(split = "information"),
+                       trControl=trctrl,
+                       tuneLength = 10)
     
     dt <- rpart(Crime.type ~ ., data = train) # create decision tree classifier
     pred.dt <- predict(dt, newdata = loans, type = "prob")[, 2] # calculate predictions (in-sample)
