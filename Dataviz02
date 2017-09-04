@@ -97,4 +97,4 @@ map +
   scale_fill_manual(values = getPalette(numDistinctColors)) + 
   ggtitle('The 2nd Most Common Types of Crime by Area')
 
-##♠still not finished
+
