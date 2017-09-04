@@ -1,0 +1,100 @@
+crime <- readRDS("./crime.whole.cleaned.2011.exploded.rds")
+if(!require("data.table")) install.packages("data.table"); library("data.table")
+if(!require("ggplot2")) install.packages("ggplot2"); library("ggplot2")
+if(!require("lubridate")) install.packages("lubridate"); library("lubridate")
+if(!require("plotly")) install.packages("plotly"); library("plotly")
+if(!require("dplyr")) install.packages("dplyr"); library("dplyr")
+trn <- data.table(crime)
+if(!require("stringr")) install.packages("stringr"); library("stringr")
+trn$LSOA.name <- as.character(trn$LSOA.name)
+trn$LSOA.name <- str_sub(trn$LSOA.name, 1, str_length(trn$LSOA.name)-4)
+trn$LSOA.name <- as.factor(trn$LSOA.name)
+levels(trn$LSOA.name)
+trn$Latitude <- as.numeric(as.character(trn$Latitude))
+trn$Longitude <- as.numeric(as.character(trn$Longitude))
+d = trn[i = Crime.type == 'Drugs',j = .N, by = .(Month, LSOA.name)]
+g = ggplot(d, aes(y = LSOA.name, x = Month)) + 
+  geom_point(aes(size = N, col = N)) +
+  scale_size(range=c(1,10)) + 
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank())
+ggplotly(g, tooltip = c('x','y','colour'))    
+
+trn[, .N, by = Crime.type][order(N, decreasing = T)][1:11]
+
+library(ggmap)
+
+ldn = get_map(location = "london", maptype = "terrain", source = "google", zoom = 12)
+map = ggmap(ldn)
+
+geocode(location = '51.50282, -0.11397') %>%get_map(maptype = "terrain", source = "google", zoom = 12) %>%
+ggmap()
+
+london = get_stamenmap(bbox = c(left = -0.6839,bottom = 51.2688, right = 0.5081, top = 51.7126), maptype = c("toner-lite"), zoom = 13)
+#maptype = c("terrain", "terrain-background",
+#"terrain-labels", "terrain-lines", "toner", "toner-2010", "toner-2011",
+#"toner-background", "toner-hybrid", "toner-labels", "toner-lines",
+#"toner-lite", "watercolor")
+
+map = ggmap(london)
+map
+map + geom_point(data = sample_n(trn, 1000), aes(x = Longitude, y = Latitude))
+
+BinnedCounts = trn[, .(.N), by = .(Long = round(Longitude,2), Lat = round(Latitude,2))][order(N, decreasing = T)]
+str(BinnedCounts)
+
+map + 
+  geom_point(data = BinnedCounts, aes(x = Long, y = Lat, color = N, size=N)) + 
+  scale_colour_gradient(name = '# Total Crime', low="blue", high="red") + 
+  scale_size(name = '# Total Crime', range = c(2,15)) 
+
+map + 
+  stat_density2d( data = sample_frac(trn, 0.1), aes(x = Longitude, y = Latitude, fill = ..level.., alpha = ..level..), size = 1, bins = 50, geom = 'polygon') +
+  scale_fill_gradient('Crime\nDensity', low = 'blue', high = 'orange') +
+  scale_alpha(range = c(.2, .3), guide = FALSE) +
+  guides(fill = guide_colorbar(barwidth = 1.5, barheight = 10))
+
+map +
+  stat_bin2d(data = trn, aes(x = Longitude, y = Latitude, fill = ..density.., alpha = ..density..), bins = 30, size = 1) + 
+  scale_fill_gradient('Crime\nDensity', low = 'blue', high = 'orange')
+
+map + 
+  geom_tile(data = BinnedCounts, aes(x = Long, y = Lat, fill = N, alpha = N)) +
+  scale_fill_gradient('Total\nCrime', low = 'blue', high = 'red')
+
+# The following box coordinates are obtained from openstreetmap.org.
+bbox = data.table(left = -0.6839,bottom = 51.2688, right = 0.5081, top = 51.7126)
+
+x_length = abs(bbox[, left - right])/30
+y_length = abs(bbox[, bottom - top])/30
+
+trn[, LatBinned := round(Latitude/y_length)*y_length]
+trn[, LongBinned := round(Longitude/x_length)*x_length]
+
+f = trn[, .N, keyby = .(LatBinned, LongBinned, Crime.type)][
+  order(LatBinned, LongBinned, N, decreasing = T)]
+f1 = f[j = Crime.type[1] , by = .(LatBinned, LongBinned)]
+f2 = f[j = Crime.type[2] , by = .(LatBinned, LongBinned)]
+
+setnames(f1, 'V1', 'Category'); setnames(f2, 'V1', 'Category')
+library(RColorBrewer) 
+# display.brewer.all() 
+
+# map + geom_tile(data = f1, aes(x = LongBinned, y = LatBinned, fill = Category))
+# map + geom_tile(data = f2, aes(x = LongBinned, y = LatBinned, fill = Category))
+
+getPalette = colorRampPalette(brewer.pal(n = 8, name = "Accent"))
+
+numDistinctColors = length(unique(f1$Category))
+map + 
+  geom_tile(data = f1, aes(x = LongBinned, y = LatBinned, fill = Category), alpha = 0.8) + 
+  scale_fill_manual(values = getPalette(numDistinctColors)) + 
+  ggtitle('The Most Common Types of Crime by Area')
+
+numDistinctColors = length(unique(f2$Category))
+map + 
+  geom_tile(data = f2, aes(x = LongBinned, y = LatBinned, fill = Category), alpha = 0.8) +
+  scale_fill_manual(values = getPalette(numDistinctColors)) + 
+  ggtitle('The 2nd Most Common Types of Crime by Area')
+
+##♠still not finished
