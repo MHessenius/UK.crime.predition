@@ -4,6 +4,13 @@ if(!require("ggplot2")) install.packages("ggplot2"); library("ggplot2")
 if(!require("lubridate")) install.packages("lubridate"); library("lubridate")
 if(!require("plotly")) install.packages("plotly"); library("plotly")
 train <- data.table(crime)
+if(!require("stringr")) install.packages("stringr"); library("stringr")
+train$LSOA.name <- as.character(train$LSOA.name)
+train$LSOA.name <- str_sub(train$LSOA.name, 1, str_length(train$LSOA.name)-4)
+train$LSOA.name <- as.factor(train$LSOA.name)
+levels(train$LSOA.name)
+train$Latitude <- as.numeric(as.character(train$Latitude))
+train$Longitude <- as.numeric(as.character(train$Longitude))
 ## crime type and location/borough
 train[, .N, by = Location][order(N, decreasing = T)][1:10]
 train[, .N, by = Crime.type][order(N, decreasing = T)][1:10]
