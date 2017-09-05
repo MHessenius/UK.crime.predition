@@ -85,5 +85,10 @@ crime <- merge(crime, pop.density, by="LSOA.code")
     crime$Area.crimes.p.month.p.square.km <- round(crime$Area.crimes.p.month / crime$Area_square_km, digits = 1)
 
 # save results
-saveRDS(crime, file="./Data/crime.whole.cleaned.2011.rds")
+# saveRDS(crime, file="./Data/crime.whole.cleaned.2011.rds")
 
+
+lapply(crime[,112:125], function(x){class(x)})
+crime.backup <- crime
+crime.backup[,171:180] <- NULL
+saveRDS(crime.backup, file="H:/size.check.rds")

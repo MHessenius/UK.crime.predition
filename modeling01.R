@@ -10,7 +10,7 @@
 # NEED FOR CHANGE
 ownwd <- "H:/GitHub/UK.crime.predition/" #set your own directory
 
-test.pct <- 0.002 # only use X per-cent of the train-data to get first & fast preliminary results
+test.pct <- 1 # only use X per-cent of the train-data to get first & fast preliminary results
                  # set it to 1 if whole train-data should be used
 
 # // NEED FOR CHANGE
@@ -62,20 +62,27 @@ test.pct <- 0.002 # only use X per-cent of the train-data to get first & fast pr
     # some hints in BADS Exercise 4.3 
     if(!require("caret")) install.packages("caret"); library("caret")
     if(!require("e1071")) install.packages("e1071"); library("e1071")
-    
-    nb <- naiveBayes(Crime.type~., data = train.red) #train nb model on all variables
+    start.time <- Sys.time()
+    nb <- naiveBayes(Crime.type~., data = train) #train nb model on all variables
     
     
     x_test <- test[,-13] #all except crime.type
     y_test <- test[,13] #all except crime.type
     pred.nb <- predict(nb, x_test)
     confusionMatrix(pred.nb, y_test) # accuracy of 13 per cent :D
+    end.time <- Sys.time()
+    time.taken <- end.time - start.time
+    time.taken
 
 #---------------------------    
     
 ### 3) Some first attempts
     
     ##--- SVM ---##
+    
+    if(!require("e1071")) install.packages("e1071"); library("e1071") # load the package
+    if(!require("pROC")) install.packages("pROC"); library("pROC") # load the package
+    if(!require("caret")) install.packages("caret"); library("caret") # load the package
     
     svm_model <- svm(Crime.type ~ ., data=train.red)
     summary(svm_model)
