@@ -74,20 +74,29 @@ test <- get.test.data()
     count <- data.frame( name= c(colnames(train)))
     count$categories <- lapply(train, function(x)length(unique(x)))
     
-    #  cat(as.character(count[count$categories>=52,"name"]), sep=",")
-    drops <- c("LSOA.code","Crime.ID","Longitude","Latitude","Location","LSOA.name","Family.Type..All.lone.parent.housholds.with.dependent.children..measures..Value","Family.Type..Lone.parent.in.part.time.employment..Total..measures..Value","Family.Type..Lone.parent.in.full.time.employment..Total..measures..Value","Family.Type..Lone.parent.not.in.employment..Total..measures..Value","Family.Type..Female.lone.parent..Total..measures..Value","Family.Type..Female.lone.parent..In.part.time.employment..measures..Value","Family.Type..Female.lone.parent..Not.in.employment..measures..Value","POI.Count_lsoa_poi","LSOA.tract.population","LSOA.tract.hectares","LSOA.tract.density.persons.p.hect","LSOA.crimes.p.tract.p.month","LSOA.crimes.p.tract.p.year","LSOA.crimes.p.year.p.hectar","Area.crimes.p.month","Area.crimes.p.month.p.square.km")
+    cat(as.character(count[count$categories>=52,"name"]), sep=",") # copy& paste output in formula below
+    drops <- c("LSOA.code","Crime.ID","Longitude","Latitude","Location","LSOA.name")
     train.red <- train[,!(names(train) %in% drops)]
     
+    # checl before
+    count <- data.frame( name= c(colnames(train.red)))
+    count$categories <- lapply(train.red, function(x)length(unique(x)))
+    View(count[count$categories>=52,])
     
-    sum(apply(train.red,2,function(x)length(unique(x)))>52) #0
     
+    # sum(apply(train.red,2,function(x)length(unique(x)))>52) #0
+    train.red2 <- train.red[1:10000,]
+    train.red2 <- droplevels(train.red2)
     start.time <- Sys.time()
-    fit=randomForest(factor(Crime.type)~., data=train.red)
+    fit=randomForest(factor(Crime.type)~., data=train.red2, ntree = 700, mtry = 5,importance = TRUE)
     end.time <- Sys.time()
     time.taken <- end.time - start.time
     time.taken
     
     varImp(fit)
+    importance_by_rf <-    importance(fit, scale = FALSE)
+    importance_by_rf <- sort(importance_by_rf[,"MeanDecreaseAccuracy"], decreasing = TRUE)
+    plot(importance_by_rf[1:100])
     
 ### 3) XGB ###
     #variable selection based on xgb

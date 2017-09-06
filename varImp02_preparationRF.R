@@ -108,3 +108,9 @@ View(count[count$categories>=52,])
     length(unique(crime$gridGroup)) #49
     class(crime$gridGroup) #factor
     
+    # --------------------------------- #
+    # -----    SAVE RESULTS   --------- #
+    # --------------------------------- #
+    
+    # save(crime, file="./Data/crime.up.to.date.rds")
+    

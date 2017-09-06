@@ -2,7 +2,7 @@
 
 get.crime.data <- function(){
       
-      crime <- readRDS("./Data/crime.whole.cleaned.2011.rds")
+      crime <- readRDS("./Data/crime.up.to.date.rds")
       
       #cleaning & conversion
       crime[,c("Last.outcome.category","Context","Year")] <- NULL
