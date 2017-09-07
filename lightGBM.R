@@ -3,6 +3,7 @@ if(!require("data.table")) install.packages("data.table"); library("data.table")
 if(!require("ggplot2")) install.packages("ggplot2"); library("ggplot2")
 if(!require("lubridate")) install.packages("lubridate"); library("lubridate")
 if(!require("plotly")) install.packages("plotly"); library("plotly")
+if(!require("dplyr")) install.packages("dplyr"); library("dplyr")
 train <- data.table(crime)
 if(!require("stringr")) install.packages("stringr"); library("stringr")
 train$LSOA.name <- as.character(train$LSOA.name)
@@ -17,9 +18,11 @@ train$Longitude <- as.numeric(as.character(train$Longitude))
   title: "Predicting And Mapping Arrest Types in London with LightGBM, R, ggplot2"
 
 # Setup
+#in order to install lightbgm three things have to be installed: git , cmake and Rtools (visit their websites to download)
 
 Setup the R packages.
-
+if(!require("devtools")) install.packages("devtools"); library("devtools")
+install_github("Microsoft/LightGBM", subdir = "R-package")
 
 if(!require("lightgbm")) install.packages("lightgbm"); library("lightgbm")
 if(!require("Matrix")) install.packages("Matrix"); library("Matrix")
@@ -30,29 +33,29 @@ if(!require("randomcoloR")) install.packages("randomcoloR"); library("randomcolo
 
 #### light gbm
 ## crime type index
-train <- train %>%
-  mutate(category_index = as.numeric(factor(Crime.type)) - 1)
+train <- train %>% mutate(category_index = as.numeric(factor(Crime.type)) - 1)
 
 train %>% select(category_index, Crime.type) %>% head()
 
 # lightgbm Training
-install.packages("devtools")
-library(devtools)
-install_github("Microsoft/LightGBM", subdir = "R-package")
 
+# declare categorical feature names, if any
+categoricals <- NULL
 # proportion of data to train on
 split <- 0.6
 
 set.seed(123)
 trainIndex <- createDataPartition(train$category_index, p = split, list = FALSE, times = 1)
 
-dtrain <- lgb.Dataset((train %>% select(Longitude, Latitude, Unemployment_Rate_UK, Crime.ID, Unemployment_Rate_London, Quarter,Youth_Unemployment_Rates_UK_16_24,Youth_Unemployment_Rates_London_16_24,LSOA.code,LSOA.name,Sun.Hours, Max.degree.C, Gap_London_UK, Rainfall.mm, Area.crimes.month.p.square.km, Area.crimes.p.month, Min.degree.C, Month, LSOA.tract.density.persons.p.hect, POI.Count_lsoa_poi) %>% data.matrix())[trainIndex,],
-                      colnames = c("Longitude", "Latitude", "Unemployment_Rate_UK", "Crime.ID", "Unemployment_Rate_London", "Quarter","Youth_Unemployment_Rates_UK_16_24","Youth_Unemployment_Rates_London_16_24","LSOA.code","LSOA.name","Sun.Hours", "Max.degree.C", "Gap_London_UK", "Rainfall.mm", "Area.crimes.month.p.square.km", "Area.crimes.p.month", "Min.degree.C", "Month", "LSOA.tract.density.persons.p.hect", "POI.Count_lsoa_poi"),
+
+
+
+dtrain <- lgb.Dataset((train %>% data.matrix())[trainIndex,],
                       categorical_feature = categoricals,
                       label = train$category_index[trainIndex], free_raw_data=T)
 
 dtest <- lgb.Dataset.create.valid(dtrain,
-                                  (train %>% select(Longitude, Latitude, Unemployment_Rate_UK, Crime.ID, Unemployment_Rate_London, Quarter,Youth_Unemployment_Rates_UK_16_24,Youth_Unemployment_Rates_London_16_24,LSOA.code,LSOA.name,Sun.Hours, Max.degree.C, Gap_London_UK, Rainfall.mm, Area.crimes.month.p.square.km, Area.crimes.p.month, Min.degree.C, Month, LSOA.tract.density.persons.p.hect, POI.Count_lsoa_poi) %>% data.matrix())[-trainIndex,],
+                                  (train %>% data.matrix())[-trainIndex,],
                                   label = train$category_index[-trainIndex])
 
 params <- list(objective = "multiclass", metric = "multi_logloss")
@@ -63,8 +66,8 @@ num_classes <- length(unique(train$category_index))
 # preformat sizes for use in data visualizations later
 train_size_format <- length(trainIndex) %>% format(big.mark=",")
 test_size_format <- (train %>% nrow() - length(trainIndex)) %>% format(big.mark=",")
-```
 
+''''
 The size of the training set is **`r train_size_format`** and the size of the test set is **`r test_size_format`**.
 
 ```{r}
@@ -91,6 +94,7 @@ system.time(
 paste("# Rounds:", bst$current_iter())
 paste("Multilogloss of best model:", bst$record_evals$test$multi_logloss$eval %>% unlist() %>% tail(1))
 ```
+
 Calculate variable importance. (note: takes awhile since single-threaded)
 
 ```{r}
@@ -98,6 +102,7 @@ df_imp <- tbl_df(lgb.importance(bst, percentage = TRUE))
 df_imp
 ```
 
+#### Prediction
 
 `preds` is a 1D vector of probabilities for each vector, of nrows x nclasses. Reshape accordingly and iterate through for the predicted label (label with the largest probability) and the corresponding probability.
 
@@ -134,3 +139,5 @@ Confusion matrix:
 cm <- confusionMatrix(df_results$label_pred, df_results$label_act)
 
 data.frame(cm$overall)
+```
+###
