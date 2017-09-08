@@ -10,6 +10,9 @@ crime <- get.crime.data() #get the up-to-date file from GitHub
 
 var.imp <- read.csv("./Data/RFoutput.csv")
 colnames(var.imp) <- c("Variable","Value")
+var.imp$Value <- NULL
+missing.columns <- data.frame(Variable = c("Crime.type","Longitude","Latitude"))
+var.imp <- rbind(var.imp, missing.columns)
+my.vars <- as.character(droplevels(var.imp$Variable[c(1:50,175:177)]))
 
-
-crime.red <- crime[,var.imp$Variable[1:50]] #change the numbers if necessary 
+crime.red <- crime[,my.vars] #change the numbers if necessary 
