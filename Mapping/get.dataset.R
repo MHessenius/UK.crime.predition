@@ -16,7 +16,7 @@ get.crime.data <- function(){
 get.train.data <- function(){
   
   #define sample size
-  smp_size <- floor(0.8 * nrow(crime))
+  smp_size <- floor(0.7 * nrow(crime))
   
   #split data
   set.seed(123)
@@ -34,7 +34,7 @@ get.train.data <- function(){
 get.test.data <- function(){
   
   #define sample size
-  smp_size <- floor(0.8 * nrow(crime))
+  smp_size <- floor(0.7 * nrow(crime))
   
   
   #split data
