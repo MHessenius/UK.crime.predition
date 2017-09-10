@@ -1,6 +1,13 @@
 crime <- readRDS("./crime.red.both.top32.rds")
-
-## transform integers to numeric
+crime$Crime.type <- as.character(crime$Crime.type)
+crime$Crime.type[crime$Crime.type == 'Anti-social behaviour'] <- 'Anti.social.behaviour'
+crime$Crime.type[crime$Crime.type == 'Other crime'] <- 'Other.crime'
+crime$Crime.type[crime$Crime.type == 'Vehicle crime'] <- 'Vehicle.crime'
+crime$Crime.type[crime$Crime.type == 'Criminal damage and arson'] <- 'Criminal.damage.and.arson'
+crime$Crime.type[crime$Crime.type == 'Other theft'] <- 'Other.theft'
+crime$Crime.type[crime$Crime.type == 'Violent crime'] <- 'Violent.crime'
+crime$Crime.type[crime$Crime.type == 'Public disorder and weapons'] <- 'Public.disorder.and.weapons'
+crime$Crime.type <- factor(crime$Crime.type)
 list <- data.frame(colnames(crime)) 
 colnames(list) <- "df"
 list$cols.id <- lapply(list$df, function(x){which(colnames(crime)==x)})
@@ -19,35 +26,41 @@ for(i in list$cols.id[list$integer==1]){
   crime[,i] <- as.numeric(gsub(",",".",crime[,i]))
 }
 
-crime$Latitude <- as.numeric(as.character(train$Latitude)) ### not working anymore
-crime$Longitude <- as.numeric(as.character(train$Longitude)) ### not working anymore
+crime$Latitude <- as.numeric(as.character(crime$Latitude))
+crime$Longitude <- as.numeric(as.character(crime$Longitude))
 
-train.test.split <- sample(2, nrow(crime), replace = TRUE, prob = c(0.7, 0.3))
-train = crime[train.test.split == 1,]
-test <- get.test.data()
-train <- get.train.data()
-test <- sparse.model.matrix(~.-1, data = test)
+train.xgb <- get.train.data()
+test.xgb <- get.test.data()
 
-# construct matrices for training
-X <- sparse.model.matrix(Crime.type ~.-1, data = train)
-Y <- as.numeric(train[, "Crime.type"]) - 1
-numclass <- range(Y)[2] + 1
+train.xgb.red <- train.xgb[1:420000,]
+test.xgb.red <- test.xgb[1:180000,]
+test.val <- test.xgb.red$Crime.type
+test.xgb.red$Crime.type <- NULL
 
-# set the parameter
-params <- list("objective" = "multi:softprob",
-               "eta" = .5,
-               "max_depth" = 5,
-               "eval_metric" = "mlogloss",
-               "num_class" = numclass)
+levels(train.xgb.red$Crime.type) <- make.names(levels(factor(train.xgb.red$Crime.type)))
 
-# cross-validation
-bst.cv <-  xgb.cv(params = params, data = X, label = Y, nfold = 3, nround = 50, verbose = T)
+model.control<- trainControl(
+  method = "cv", # 'cv' for cross validation
+  number = 5, # number of folds in cross validation
+  classProbs = TRUE,
+  allowParallel = TRUE, # Enable parallelization if available
+  returnData = FALSE 
+)
 
-# training with gradient boost
-bst <- xgboost(data = X, label = Y, params = params, nrounds = 50)
+xgb.parms <- expand.grid(nrounds = 500, 
+                         max_depth = 10, 
+                         eta = 0.05, 
+                         gamma = 5,
+                         colsample_bytree = 0.7,
+                         min_child_weight = 1,
+                         subsample = 0.7)
+xgb <- train(factor(Crime.type)~., data = train.xgb.red,  
+             method = "xgbTree",
+             tuneGrid = xgb.parms, 
+             metric = "Accuracy", trControl = model.control)
+xgb.pred <- predict(xgb, newdata = test.xgb.red, type = "raw")
 
-# save the model
-xgb.dump(bst, with.stats = TRUE)
+results <- as.factor(colnames(xgb.pred)[apply(xgb.pred,1,which.max)])
+test.val <- test.xgb.red$Crime.type
 
-# apply prediction
-pred <- predict(bst, newdata = test)
+confusionMatrix(results,test.val)
