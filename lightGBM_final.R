@@ -65,7 +65,7 @@ results <- t(apply(preds_matrix, 1, function (x) {
    return (c(max_index-1, x[max_index]))
  }))
 
-df_results <- data.frame(results, label_act = test.gbm[,1]) %>%
+df_results <- data.frame(results, label_act = test.gbm[,47]) %>%
    tbl_df() %>%
    transmute(label_pred = X1, prod_pred = X2, label_act)
 
