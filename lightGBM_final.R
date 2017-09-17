@@ -42,17 +42,21 @@ valids <- list(test=dtest)
 categoricals <- NULL
  
 num_classes <- length(unique(train.gbm$Crime.type))
-bst <- lgb.train(params,
-                    dtrain,
-                    nrounds = 600,
-                    valids,
-                    num_threads = 10,
-                    num_class = num_classes,
-                    verbose = 0,
-                    record = T,
-                    early_stopping_rounds = 5,
-                    categorical_feature = categoricals
-   )
+ bst <- lgb.train(params,
+                  dtrain,
+                  nrounds = 1000,
+                  valids,
+                  num_threads = 15,
+                  num_class = num_classes,
+                  verbose = 0,
+                  max_depth= 10,
+                  num_leaves = 150,
+                  learning_rate = 0.05,
+                  max_bin = 200,
+                  record = T,
+                  early_stopping_rounds = 5,
+                  categorical_feature = categoricals
+ )
 test <- test.gbm[ ,-47] %>% data.matrix()
 preds_matrix <- predict(bst, test, reshape=T)
 # likely not most efficient method
